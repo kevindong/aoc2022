@@ -43,7 +43,7 @@ def scan_left(data, i, j):
 
 
 def scan_right(data, i, j):
-    if j == 0:
+    if j == len(data[i]) - 1:
         return 0
     score = 0
     start_height = data[i][j]
