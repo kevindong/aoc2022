@@ -1,5 +1,12 @@
-import collections
-import math
+"""
+I had originally done some optimizations for Part 2:
+* Used `collections.deque` to make popping from the left side of each monkey's items more efficient
+* Using function pointers rather than evals
+* Using `math.pow` rather than `value * value`; although this ran into overflow issues
+
+But then I realized the dominating factor is that multiplying very large values is the limiting factor and then that led me stumbling onto the number theory trick to speed things up. For simplicity, I reverted this file back to what it was for Part 1, but with the number theory trick retained. The optimizations I made definitely made a difference, but even without those (and with just the number theory trick), this program still completes within a few seconds and I like the simplicity of this approach more.
+"""
+
 import functools
 
 
@@ -14,31 +21,11 @@ class Monkey:
         if_false_line,
     ):
         self.i = i
-        self.items = collections.deque(
-            map(int, starting_items_line.split(": ")[1].split(", "))
-        )
+        self.items = list(map(int, starting_items_line.split(": ")[1].split(", ")))
+        self.operation = operation_line.split("new = ")[1]
         self.test_mod = int(test_line.split(" by ")[1])
         self.if_true_monkey = int(if_true_line.split(" monkey ")[1])
         self.if_false_monkey = int(if_false_line.split(" monkey ")[1])
-
-        operation = operation_line.split("new = ")[1]
-        if operation == "old * old":
-            self.operation = self.exponent
-        elif "+" in operation:
-            self.operation = self.add
-            self.value = int(operation.split(" ")[-1])
-        elif "*" in operation:
-            self.operation = self.multiply
-            self.value = int(operation.split(" ")[-1])
-
-    def exponent(self, worry):
-        return worry * worry
-
-    def add(self, worry):
-        return worry + self.value
-
-    def multiply(self, worry):
-        return worry * self.value
 
     def __repr__(self):
         return f"Monkey({self.i})"
@@ -47,8 +34,8 @@ class Monkey:
     def inspect_items(self, mod_product):
         out = []
         while len(self.items) > 0:
-            item = self.items.popleft()
-            worry = self.operation(item)
+            item = self.items.pop(0)
+            worry = eval(self.operation, None, {"old": item})
             worry %= mod_product
             if worry % self.test_mod == 0:
                 out.append((worry, self.if_true_monkey))
